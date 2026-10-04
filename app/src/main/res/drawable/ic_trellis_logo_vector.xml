@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Dark Navy Background Shield -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M 0,0 L 100,0 L 100,100 L 0,100 Z" />
+
+    <!-- Segmented Ring - Top Left -->
+    <path
+        android:strokeColor="#81C784"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 10.2 46.5 A 40 40 0 0 1 46.5 10.2" />
+
+    <!-- Segmented Ring - Top Right -->
+    <path
+        android:strokeColor="#66BB6A"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 53.5 10.2 A 40 40 0 0 1 89.8 46.5" />
+
+    <!-- Segmented Ring - Bottom Right -->
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 89.8 53.5 A 40 40 0 0 1 53.5 89.8" />
+
+    <!-- Segmented Ring - Bottom Left -->
+    <path
+        android:strokeColor="#2E7D32"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 46.5 89.8 A 40 40 0 0 1 10.2 53.5" />
+
+    <!-- Tree Trunk -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M 48 90 L 52 90 L 52 65 C 52 55 55 45 62 38 L 60 36 C 52 42 50 50 50 60 C 50 50 48 42 40 36 L 38 38 C 45 45 48 55 48 65 Z" />
+
+    <!-- Central Top Leaf -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M 50 20 C 55 28 55 35 50 40 C 45 35 45 28 50 20 Z" />
+
+    <!-- Upper Left Leaf -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M 35 30 C 42 35 45 42 42 48 C 35 45 30 38 35 30 Z" />
+
+    <!-- Upper Right Leaf -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M 65 30 C 58 35 55 42 58 48 C 65 45 70 38 65 30 Z" />
+
+    <!-- Lower Left Leaf -->
+    <path
+        android:fillColor="#388E3C"
+        android:pathData="M 25 45 C 32 48 35 55 30 60 C 23 55 20 48 25 45 Z" />
+
+    <!-- Lower Right Leaf -->
+    <path
+        android:fillColor="#388E3C"
+        android:pathData="M 75 45 C 68 48 65 55 70 60 C 77 55 80 48 75 45 Z" />
+
+    <!-- Mid Inner Left Leaf -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M 40 45 C 45 50 45 58 40 62 C 35 58 35 50 40 45 Z" />
+
+    <!-- Mid Inner Right Leaf -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M 60 45 C 55 50 55 58 60 62 C 65 58 65 50 60 45 Z" />
+
+</vector>

@@ -1,0 +1,6 @@
+{
+  "name": "Trellis",
+  "description": "Interactive task and habit management app with real-time team collaboration, offline Room persistence, weekly progress matrix, and Gemini AI analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
