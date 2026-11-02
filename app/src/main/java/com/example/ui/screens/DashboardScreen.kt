@@ -9,34 +9,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.ui.components.GamifiedAchievementsRow
 import com.example.ui.components.GamifiedLevelHeader
 import com.example.ui.components.GamifiedStreakFlameCard
+import com.example.ui.components.MicroGardenBanner
 import com.example.ui.components.ProgressLineChartSummary
 import com.example.ui.components.TodayTaskCompletionWidget
 import com.example.ui.components.TrellisBrandedProgressLogo
-import com.example.ui.theme.GamifiedElectricBlue
 import com.example.ui.viewmodel.HabitFlowViewModel
 import java.time.LocalDate
 
@@ -51,9 +38,9 @@ fun DashboardScreen(
 
     // Real dynamic current date
     val todayKey = remember { LocalDate.now().toString() }
-    val todayLogs = logs.filter { it.dateString == todayKey && it.completed }
     val totalLogsCount = logs.count { it.completed }
-    val totalXp = (totalLogsCount * 50) + 240
+    val completedTasksCount = tasks.count { it.status.equals("Done", ignoreCase = true) }
+    val totalXp = (totalLogsCount * 50) + (completedTasksCount * 25)
 
     val bestStreak = habits.maxOfOrNull { it.bestStreak } ?: 0
     val activeStreak = habits.maxOfOrNull { it.currentStreak } ?: 0
@@ -62,10 +49,10 @@ fun DashboardScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Trellis Creative Architectural Logo with Live Surrounding Progress Ring
+        // Trellis Creative Architectural Logo Header
         item {
             TrellisBrandedProgressLogo(
                 tasks = tasks,
@@ -74,7 +61,14 @@ fun DashboardScreen(
             )
         }
 
-        // Gamified Level & XP Banner
+        // Sleek Micro Garden Banner (auto-watered when habits are completed)
+        item {
+            MicroGardenBanner(
+                totalXp = totalXp
+            )
+        }
+
+        // Level & XP Banner
         item {
             GamifiedLevelHeader(
                 totalXp = totalXp,
@@ -91,7 +85,7 @@ fun DashboardScreen(
             )
         }
 
-        // Gamified Pulsating Streak Flame
+        // Streak Flame Card
         item {
             GamifiedStreakFlameCard(
                 currentStreak = activeStreak,
@@ -99,7 +93,7 @@ fun DashboardScreen(
             )
         }
 
-        // Progress Line Graph Summary with 5 Filters
+        // Progress Line Graph Summary
         item {
             ProgressLineChartSummary(
                 habits = habits,
@@ -113,5 +107,3 @@ fun DashboardScreen(
         }
     }
 }
-
-

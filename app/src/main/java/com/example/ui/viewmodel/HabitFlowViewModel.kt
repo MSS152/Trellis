@@ -3,6 +3,8 @@ package com.example.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.data.health.HealthDataSnapshot
+import com.example.data.local.GardenStateEntity
 import com.example.data.local.HabitEntity
 import com.example.data.local.HabitLogEntity
 import com.example.data.local.TaskEntity
@@ -41,6 +43,14 @@ class HabitFlowViewModel(private val repository: HabitRepository) : ViewModel() 
         initialValue = emptyList()
     )
 
+    val gardenState: StateFlow<GardenStateEntity?> = repository.gardenState.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = GardenStateEntity(id = 1, gardenLevel = 1, totalGardenXp = 0, sproutStage = "SPROUT", floraCount = 1, gardenHealthScore = 100)
+    )
+
+    val healthSnapshot: StateFlow<HealthDataSnapshot> = repository.healthConnectManager.healthSnapshot
+
     init {
         viewModelScope.launch {
             repository.seedInitialDataIfEmpty()
@@ -53,9 +63,55 @@ class HabitFlowViewModel(private val repository: HabitRepository) : ViewModel() 
         }
     }
 
-    fun addHabit(title: String, emoji: String, category: String, goalCount: Int) {
+    fun toggleHabitWithDetails(
+        habitId: Long,
+        dateString: String,
+        isCompleted: Boolean,
+        numericValue: Double = 1.0,
+        intensityRating: Int = 5,
+        notes: String? = null
+    ) {
         viewModelScope.launch {
-            repository.addHabit(title, emoji, category, goalCount)
+            repository.toggleHabitLog(
+                habitId = habitId,
+                dateString = dateString,
+                completed = isCompleted,
+                numericValue = numericValue,
+                intensityRating = intensityRating,
+                notes = notes
+            )
+        }
+    }
+
+    fun addHabit(
+        title: String,
+        emoji: String,
+        category: String,
+        goalCount: Int,
+        habitType: String = "POSITIVE",
+        targetFrequency: String = "DAILY",
+        weeklyTargetCount: Int = 7,
+        unitType: String = "COMPLETION",
+        targetUnitValue: Double = 1.0,
+        unitLabel: String = "check",
+        isHealthConnectSynced: Boolean = false,
+        healthMetricType: String = "NONE"
+    ) {
+        viewModelScope.launch {
+            repository.addHabit(
+                title = title,
+                emoji = emoji,
+                category = category,
+                goalCount = goalCount,
+                habitType = habitType,
+                targetFrequency = targetFrequency,
+                weeklyTargetCount = weeklyTargetCount,
+                unitType = unitType,
+                targetUnitValue = targetUnitValue,
+                unitLabel = unitLabel,
+                isHealthConnectSynced = isHealthConnectSynced,
+                healthMetricType = healthMetricType
+            )
         }
     }
 
@@ -80,6 +136,30 @@ class HabitFlowViewModel(private val repository: HabitRepository) : ViewModel() 
     fun updateTaskStatus(task: TaskEntity, newStatus: String) {
         viewModelScope.launch {
             repository.updateTaskStatus(task, newStatus)
+        }
+    }
+
+    fun updateTask(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.updateTask(task)
+        }
+    }
+
+    fun deleteTask(taskId: Long) {
+        viewModelScope.launch {
+            repository.deleteTask(taskId)
+        }
+    }
+
+    fun nurtureGarden() {
+        viewModelScope.launch {
+            repository.nurtureGarden()
+        }
+    }
+
+    fun syncHealthConnect() {
+        viewModelScope.launch {
+            repository.syncHealthConnect()
         }
     }
 }

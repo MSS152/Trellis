@@ -12,15 +12,17 @@ import androidx.room.RoomDatabase
         TaskEntity::class,
         CollaboratorEntity::class,
         ActivityLogEntity::class,
-        CollaborativeSpaceEntity::class
+        CollaborativeSpaceEntity::class,
+        GardenStateEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class HabitDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
     abstract fun taskDao(): TaskDao
     abstract fun collaborationDao(): CollaborationDao
+    abstract fun gardenDao(): GardenDao
 
     companion object {
         @Volatile

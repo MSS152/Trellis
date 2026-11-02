@@ -72,6 +72,13 @@ fun GamifiedLevelHeader(
     val currentLevelXp = totalXp % 100
     val progress = currentLevelXp / 100f
 
+    val levelTitle = when (level) {
+        1 -> "LEVEL 1 BEGINNER"
+        2 -> "LEVEL 2 ACHIEVER"
+        3 -> "LEVEL 3 MASTER"
+        else -> "LEVEL $level GRANDMASTER"
+    }
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -114,7 +121,7 @@ fun GamifiedLevelHeader(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "LEVEL $level GRANDMASTER",
+                                text = levelTitle,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.ExtraBold

@@ -113,6 +113,8 @@ fun MobileHabitGrid(
     habits: List<HabitEntity>,
     logs: List<HabitLogEntity>,
     onToggleDay: (habitId: Long, dateString: String, currentState: Boolean) -> Unit,
+    onToggleWithDetails: ((habitId: Long, dateString: String, isDone: Boolean, value: Double, intensity: Int, notes: String?) -> Unit)? = null,
+    onAddHabit: ((title: String, emoji: String, category: String, habitType: String) -> Unit)? = null,
     onUpdateHabit: (HabitEntity) -> Unit = {},
     onDeleteHabit: (Long) -> Unit = {},
     modifier: Modifier = Modifier
@@ -123,6 +125,7 @@ fun MobileHabitGrid(
 
     var editingHabit by remember { mutableStateOf<HabitEntity?>(null) }
     var deletingHabit by remember { mutableStateOf<HabitEntity?>(null) }
+    var loggingModalHabit by remember { mutableStateOf<HabitEntity?>(null) }
     var selectedSummaryDate by remember { mutableStateOf<LocalDate?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -210,129 +213,280 @@ fun MobileHabitGrid(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "💡 Slide Right to Edit • Slide Left to Delete",
+                            text = "💡 Tap any habit to check off • Slide Right to Edit • Slide Left to Delete",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 10.sp
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        habits.forEach { habit ->
-                            val isDone = logs.any { it.habitId == habit.id && it.dateString == todayStr && it.completed }
-
-                            val dismissState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { dismissValue ->
-                                    when (dismissValue) {
-                                        SwipeToDismissBoxValue.StartToEnd -> {
-                                            editingHabit = habit
-                                            false
-                                        }
-                                        SwipeToDismissBoxValue.EndToStart -> {
-                                            deletingHabit = habit
-                                            false
-                                        }
-                                        else -> false
-                                    }
-                                }
+                        val quickSuggestions = remember {
+                            listOf(
+                                Triple("Drink 3L Water", "Body", "💧"),
+                                Triple("20-Min Workout / Rest", "Body", "🏋️"),
+                                Triple("Read 10 Pages", "Mind", "📚"),
+                                Triple("No Doomscrolling", "Mind", "🚫")
                             )
+                        }
 
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                backgroundContent = {
-                                    val direction = dismissState.dismissDirection
-                                    val bgColor = when (direction) {
-                                        SwipeToDismissBoxValue.StartToEnd -> GamifiedElectricBlue
-                                        SwipeToDismissBoxValue.EndToStart -> Color(0xFFEF4444)
-                                        else -> Color.Transparent
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(vertical = 4.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(bgColor)
-                                            .padding(horizontal = 20.dp),
-                                        contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-                                    ) {
-                                        if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(Icons.Default.Edit, contentDescription = "Edit Habit", tint = Color.White)
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Text("Edit", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                            }
-                                        } else if (direction == SwipeToDismissBoxValue.EndToStart) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text("Delete", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Icon(Icons.Default.Delete, contentDescription = "Delete Habit", tint = Color.White)
-                                            }
-                                        }
-                                    }
-                                },
+                        if (habits.isEmpty()) {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
+                                    .padding(vertical = 20.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(
-                                            if (isDone) GamifiedEmerald.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant
-                                        )
-                                        .border(
-                                            width = 1.dp,
-                                            color = if (isDone) GamifiedEmerald else Color.Transparent,
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text(habit.emoji, fontSize = 22.sp)
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        Column {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(
-                                                    text = habit.title,
-                                                    color = if (isDone) GamifiedEmerald else MaterialTheme.colorScheme.onSurface,
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                HabitPillarBadge(category = habit.category)
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("🌱 Build or Break Habits", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("Tap a 1-tap suggestion below to immediately populate your checklist:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                                    Spacer(modifier = Modifier.height(14.dp))
+
+                                    quickSuggestions.forEach { (hTitle, hCat, hEmoji) ->
+                                        val hType = if (hTitle.startsWith("No ")) "NEGATIVE" else "POSITIVE"
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(GamifiedElectricBlue.copy(alpha = 0.15f))
+                                                .border(1.dp, GamifiedElectricBlue, RoundedCornerShape(12.dp))
+                                                .clickable {
+                                                    if (onAddHabit != null) {
+                                                        onAddHabit(hTitle, hEmoji, hCat, hType)
+                                                    } else {
+                                                        onUpdateHabit(
+                                                            HabitEntity(
+                                                                title = hTitle,
+                                                                emoji = hEmoji,
+                                                                category = hCat,
+                                                                habitType = hType
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                                .padding(10.dp)
+                                                .testTag("quick_suggestion_$hTitle"),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("$hEmoji $hTitle", color = GamifiedElectricBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            habits.forEach { habit ->
+                                androidx.compose.runtime.key(habit.id) {
+                                    val isDone = logs.any { it.habitId == habit.id && it.dateString == todayStr && it.completed }
+                                    val toggleCurrentHabit = {
+                                        if (isDone) {
+                                            onToggleDay(habit.id, todayStr, true)
+                                        } else if (habit.unitType != "COMPLETION") {
+                                            loggingModalHabit = habit
+                                        } else {
+                                            onToggleDay(habit.id, todayStr, false)
+                                        }
+                                    }
+
+                                    val dismissState = rememberSwipeToDismissBoxState(
+                                        confirmValueChange = { dismissValue ->
+                                            when (dismissValue) {
+                                                SwipeToDismissBoxValue.StartToEnd -> {
+                                                    editingHabit = habit
+                                                    false
+                                                }
+                                                SwipeToDismissBoxValue.EndToStart -> {
+                                                    deletingHabit = habit
+                                                    false
+                                                }
+                                                else -> false
                                             }
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                text = "Target: ${habit.goalCount} days • 🔥 ${habit.currentStreak}d streak",
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                fontSize = 10.sp
+                                        }
+                                    )
+
+                                    SwipeToDismissBox(
+                                        state = dismissState,
+                                        backgroundContent = {
+                                            val direction = dismissState.dismissDirection
+                                            val bgColor = when (direction) {
+                                                SwipeToDismissBoxValue.StartToEnd -> GamifiedElectricBlue
+                                                SwipeToDismissBoxValue.EndToStart -> Color(0xFFEF4444)
+                                                else -> Color.Transparent
+                                            }
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .padding(vertical = 4.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(bgColor)
+                                                    .padding(horizontal = 20.dp),
+                                                contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                                            ) {
+                                                if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(Icons.Default.Edit, contentDescription = "Edit Habit", tint = Color.White)
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Text("Edit", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                    }
+                                                } else if (direction == SwipeToDismissBoxValue.EndToStart) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text("Delete", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Icon(Icons.Default.Delete, contentDescription = "Delete Habit", tint = Color.White)
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(
+                                                    if (isDone) GamifiedEmerald.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant
+                                                )
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = if (isDone) GamifiedEmerald else Color.Transparent,
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
+                                                .clickable { toggleCurrentHabit() }
+                                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                                                .testTag("today_habit_row_${habit.id}"),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Text(habit.emoji, fontSize = 22.sp)
+                                                Spacer(modifier = Modifier.width(10.dp))
+                                                Column {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text(
+                                                            text = habit.title,
+                                                            color = if (isDone) GamifiedEmerald else MaterialTheme.colorScheme.onSurface,
+                                                            fontSize = 14.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        if (habit.habitType == "NEGATIVE") {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .background(GamifiedFlameOrange.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                                                                    .border(1.dp, GamifiedFlameOrange, RoundedCornerShape(8.dp))
+                                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                            ) {
+                                                                Text("🚫 Break Bad", color = GamifiedFlameOrange, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                                            }
+                                                        } else {
+                                                            HabitPillarBadge(category = habit.category)
+                                                        }
+                                                    }
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text(
+                                                            text = if (habit.targetFrequency == "WEEKLY_X_TIMES") "Target: ${habit.weeklyTargetCount}x/wk • 🔥 ${habit.currentStreak}d" else "Target: ${habit.goalCount}d • 🔥 ${habit.currentStreak}d",
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                            fontSize = 10.sp
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .clip(RoundedCornerShape(6.dp))
+                                                                .background(Color(0xFF0EA5E9).copy(alpha = 0.2f))
+                                                                .clickable {
+                                                                    onToggleDay(habit.id, todayStr, isDone)
+                                                                }
+                                                                .padding(horizontal = 5.dp, vertical = 1.dp)
+                                                        ) {
+                                                            Text("🛋️ Rest Day", color = Color(0xFF38BDF8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            Checkbox(
+                                                checked = isDone,
+                                                onCheckedChange = { toggleCurrentHabit() },
+                                                colors = CheckboxDefaults.colors(
+                                                    checkedColor = if (habit.habitType == "NEGATIVE") GamifiedFlameOrange else GamifiedEmerald,
+                                                    uncheckedColor = MaterialTheme.colorScheme.outline,
+                                                    checkmarkColor = Color.White
+                                                ),
+                                                modifier = Modifier.testTag("today_checkbox_${habit.id}")
                                             )
                                         }
                                     }
+                                }
+                            }
 
-                                    Checkbox(
-                                        checked = isDone,
-                                        onCheckedChange = {
-                                            onToggleDay(habit.id, todayStr, isDone)
-                                        },
-                                        colors = CheckboxDefaults.colors(
-                                            checkedColor = GamifiedEmerald,
-                                            uncheckedColor = MaterialTheme.colorScheme.outline,
-                                            checkmarkColor = Color.White
-                                        ),
-                                        modifier = Modifier.testTag("today_checkbox_${habit.id}")
-                                    )
+                            val remainingSuggestions = quickSuggestions.filter { (sugTitle, _, _) ->
+                                habits.none { it.title.contains(sugTitle, ignoreCase = true) }
+                            }
+                            if (remainingSuggestions.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    text = "🌱 1-Tap Quick Add Suggestions:",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                remainingSuggestions.forEach { (hTitle, hCat, hEmoji) ->
+                                    val hType = if (hTitle.startsWith("No ")) "NEGATIVE" else "POSITIVE"
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 3.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(GamifiedElectricBlue.copy(alpha = 0.12f))
+                                            .border(1.dp, GamifiedElectricBlue.copy(alpha = 0.6f), RoundedCornerShape(10.dp))
+                                            .clickable {
+                                                if (onAddHabit != null) {
+                                                    onAddHabit(hTitle, hEmoji, hCat, hType)
+                                                } else {
+                                                    onUpdateHabit(
+                                                        HabitEntity(
+                                                            title = hTitle,
+                                                            emoji = hEmoji,
+                                                            category = hCat,
+                                                            habitType = hType
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                            .padding(8.dp)
+                                            .testTag("quick_suggestion_$hTitle"),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("+ $hEmoji $hTitle", color = GamifiedElectricBlue, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }
                     }
                 }
+
+        loggingModalHabit?.let { habitToLog ->
+            HabitLoggingModal(
+                habit = habitToLog,
+                onDismiss = { loggingModalHabit = null },
+                onConfirm = { valVal, intensityVal, notesVal ->
+                    if (onToggleWithDetails != null) {
+                        onToggleWithDetails(habitToLog.id, today.toString(), true, valVal, intensityVal, notesVal)
+                    } else {
+                        onToggleDay(habitToLog.id, today.toString(), false)
+                    }
+                    loggingModalHabit = null
+                }
+            )
+        }
             }
 
             HabitCheckViewMode.WEEKLY -> {

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.Icon
@@ -30,9 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.sp
+import com.example.data.health.HealthConnectManager
 import com.example.data.local.HabitDatabase
 import com.example.data.repository.HabitRepository
 import com.example.ui.screens.DashboardScreen
+import com.example.ui.screens.Garden3DGameScreen
 import com.example.ui.screens.HabitGridScreen
 import com.example.ui.screens.TasksWorkspaceScreen
 import com.example.ui.theme.GamifiedElectricBlue
@@ -44,10 +47,13 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: HabitFlowViewModel by viewModels {
         val database = HabitDatabase.getDatabase(applicationContext)
+        val healthManager = HealthConnectManager(applicationContext)
         val repository = HabitRepository(
             habitDao = database.habitDao(),
             taskDao = database.taskDao(),
-            collaborationDao = database.collaborationDao()
+            collaborationDao = database.collaborationDao(),
+            gardenDao = database.gardenDao(),
+            healthConnectManager = healthManager
         )
         HabitFlowViewModelFactory(repository)
     }
@@ -77,6 +83,7 @@ fun MainAppScreen(viewModel: HabitFlowViewModel) {
     val navItems = listOf(
         NavItem("Overview", Icons.Default.Dashboard, "nav_dashboard"),
         NavItem("Habit Check", Icons.Default.GridOn, "nav_grid"),
+        NavItem("Garden", Icons.Default.Eco, "nav_garden"),
         NavItem("Tasks", Icons.Default.TaskAlt, "nav_tasks")
     )
 
@@ -131,9 +138,9 @@ fun MainAppScreen(viewModel: HabitFlowViewModel) {
             when (selectedTab) {
                 0 -> DashboardScreen(viewModel = viewModel)
                 1 -> HabitGridScreen(viewModel = viewModel)
-                2 -> TasksWorkspaceScreen(viewModel = viewModel)
+                2 -> Garden3DGameScreen(viewModel = viewModel)
+                3 -> TasksWorkspaceScreen(viewModel = viewModel)
             }
         }
     }
 }
-

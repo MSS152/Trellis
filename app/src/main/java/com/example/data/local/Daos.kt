@@ -12,6 +12,9 @@ interface HabitDao {
     @Query("SELECT * FROM habits WHERE spaceId = :spaceId ORDER BY id ASC")
     fun getHabitsForSpace(spaceId: String): Flow<List<HabitEntity>>
 
+    @Query("SELECT * FROM habits WHERE id = :habitId LIMIT 1")
+    suspend fun getHabitById(habitId: Long): HabitEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHabit(habit: HabitEntity): Long
 
@@ -23,6 +26,12 @@ interface HabitDao {
 
     @Query("DELETE FROM habits WHERE id = :habitId")
     suspend fun deleteHabitById(habitId: Long)
+
+    @Query("DELETE FROM habits")
+    suspend fun deleteAllHabits()
+
+    @Query("DELETE FROM habit_logs")
+    suspend fun deleteAllHabitLogs()
 
     @Query("SELECT * FROM habit_logs WHERE dateString = :dateString")
     fun getLogsForDate(dateString: String): Flow<List<HabitLogEntity>>
@@ -50,6 +59,9 @@ interface TaskDao {
 
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteTaskById(taskId: Long)
+
+    @Query("DELETE FROM tasks")
+    suspend fun deleteAllTasks()
 }
 
 @Dao
@@ -77,4 +89,13 @@ interface CollaborationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSpace(space: CollaborativeSpaceEntity)
+}
+
+@Dao
+interface GardenDao {
+    @Query("SELECT * FROM garden_state WHERE id = 1")
+    fun getGardenState(): Flow<GardenStateEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateGardenState(state: GardenStateEntity)
 }
